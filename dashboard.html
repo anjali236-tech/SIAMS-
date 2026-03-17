@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIAMS+ Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f9fc;
+      color: #1f2d3d;
+    }
+    header {
+      background-color: #184d8a;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; }
+    .logo img { height: 40px; margin-right: 20px; }
+    nav a { color: white; margin-left: 20px; text-decoration: none; font-weight: 500; }
+    .container { padding: 30px; }
+    h1 { margin-top: 0; }
+    .cards {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .card {
+      flex: 1;
+      min-width: 200px;
+      background: linear-gradient(135deg, #d0eaff, #b0d4f1);
+      color: #184d8a;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .actions form { display: flex; gap: 10px; margin-bottom: 10px; }
+    .actions input, .actions button {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .actions button {
+      background-color: #ff9e2c;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    .actions button:hover { background-color: #e3891f; }
+    .sections { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
+    .section {
+      flex: 1;
+      min-width: 250px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .section ul { list-style-type: disc; padding-left: 20px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    thead tr { background:#184d8a; color:white; }
+    .flash-message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="SIES.png" alt="College Logo">
+      <strong>College Logo</strong>
+    </div>
+    <nav>
+      <a href="#">Dashboard</a>
+      <a href="#">Assets</a>
+      <a href="#">Log out</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h1>Smart Issue & Asset Management System (SIAMS+)</h1>
+    
+    <!-- Cards -->
+    <div class="cards">
+      <div class="card">
+        <div><strong>{{ total_assets or 0 }}</strong></div>
+        <div>Total Assets</div>
+      </div>
+      <div class="card">
+        <div><strong>{{ issued_assets or 0 }}</strong></div>
+        <div>Issued Assets</div>
+      </div>
+      <div class="card">
+        <div><strong>{{ maintenance_assets or 0 }}</strong></div>
+        <div>Under Maintenance</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <form action="/issue" method="POST">
+        <input type="text" name="asset_name" placeholder="Enter asset name" required>
+        <button type="submit">Issue</button>
+      </form>
+
+      <form action="/add_asset" method="POST">
+        <input type="text" name="asset_name" placeholder="Enter new asset name" required>
+        <button type="submit">Add Asset</button>
+      </form>
+
+      <form action="/search" method="POST">
+        <input type="text" name="search_keyword" placeholder="Search asset...">
+        <button type="submit">Search</button>
+      </form>
+
+      <form action="/maintenance" method="POST">
+        <input type="text" name="asset_name" placeholder="Enter asset name">
+        <button type="submit">Send to Maintenance</button>
+      </form>
+
+      <form action="/show_all" method="get">
+        <button type="submit">Show All Assets</button>
+      </form>
+
+      <div style="text-align: right; margin-top: 20px;">
+        <form action="/return_asset" method="POST" style="display: inline-flex; gap: 10px;">
+          <input type="text" name="asset_name" placeholder="Enter asset name to return" required>
+          <button type="submit">Return Asset</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message {% if category == 'success' %}flash-success{% else %}flash-error{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Search Result -->
+    {% if search_result %}
+      <div style="margin-top:10px; padding:10px; background:#e6f4ea; border:1px solid #b2d8b9; border-radius:5px;">
+        {{ search_result }}
+      </div>
+    {% endif %}
+
+    <!-- All Assets Table -->
+    {% if all_assets %}
+      <h3><center>All Assets</center></h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for asset in all_assets %}
+          <tr>
+            <td>{{ asset.id }}</td>
+            <td>{{ asset.name }}</td>
+            <td>{{ asset.status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <form action="/close_table" method="post" style="margin-top:10px;">
+        <button type="submit" style="background:#e74c3c; color:white; padding:8px 12px; border:none; border-radius:5px;">Close Table</button>
+      </form>
+    {% endif %}
+  </div>
+
+<div class="sections">
+      <div class="section">
+        <h3>Quick Activities</h3>
+        <ul>
+          <li>Projector issued to Anjali</li>
+          <li>Laptop returned by unnati</li>
+          <li>AC sent to maintenance</li>
+          <li>dhriti......</li>
+          <li>farhat....</li>
+          <li>nandini......</li>
+          <li>suhanaaaaaa kaisi hai!!</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>Notifications</h3>
+        <ul>
+          <li>5 items still not returned</li>
+          <li>projector in CR 2 not working</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
